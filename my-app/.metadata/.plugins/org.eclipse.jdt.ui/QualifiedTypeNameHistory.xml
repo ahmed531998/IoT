@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.CoapResource"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.server.resources.CoapExchange"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.coap.CoAP.ResponseCode"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.coap.Response"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.CoapResponse"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.CoapClient"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.CoapObserveRelation"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.CoapHandler"/>
+<fullyQualifiedTypeName name="org.eclipse.californium.core.coap.MediaTypeRegistry"/>
+<fullyQualifiedTypeName name="iot.unipi.it.MainApp"/>
+</qualifiedTypeNameHistroy>

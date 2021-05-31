@@ -1,0 +1,7 @@
+package iot.unipi.it;
+
+public class Alarm extends Resource {
+	public Alarm(String address, String path) {
+		super(address, path);
+	}
+}

@@ -1,0 +1,29 @@
+package iot.unipi.it;
+
+import org.eclipse.californium.core.CoapServer;
+
+
+class CoAPResourceExample extends CoapResource{
+	public CoAPResourceExample(String name) {
+		super(name);
+		setObservable(true);
+	}
+	
+	public void handleGET(CoapExchangeexchange) {
+		exchange.respond("hello world");
+	}
+	
+	public void handlePOST(CoapExchangeexchange) {
+		/* your stuff */exchange.respond(ResponseCode.CREATED);
+	}
+}
+
+
+public class MyServer extends CoapServer {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		System.out.print("Running it!");
+	}
+
+}

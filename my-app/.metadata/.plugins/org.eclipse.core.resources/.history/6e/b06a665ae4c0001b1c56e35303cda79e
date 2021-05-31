@@ -1,0 +1,56 @@
+package iot.unipi.it;
+
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
+import org.eclipse.californium.core.CoapResponse;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+
+public class CoapObserverClient extends CoapClient {
+	private Resource r;
+	CoapObserveRelation coapObserveRelation;
+
+	public CoapObserverClient(Resource r) {
+		super(r.getResourceURI());
+		this.r = r;
+	}
+
+	public void startObserving() {
+		coapObserveRelation = this.observe(new CoapHandler () {
+			public void onLoad(CoapResponse response) {
+				try {
+					String value;
+					JSONObject jo = (JSONObject) JSONValue.parseWithException(response.getResponseText());
+					
+					if (jo.containsKey("temperature")) {
+						value = jo.get("temperature").toString();
+						Integer numericValue = Integer.parseInt(value.trim());
+						int lower = 36;
+						int upper = 39;
+						if (numericValue < lower || numericValue > upper) {
+							//get index of thermometer
+							//get index of corresponding alarm
+							//trigger alarm
+						}
+					} else {
+						System.out.println("Temperature value not found.");
+						return;
+					}
+	
+					//store read value in DB
+	
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+	
+			public void onError() {
+				System.out.println("Error in observing.");
+			}
+		});
+	};
+}

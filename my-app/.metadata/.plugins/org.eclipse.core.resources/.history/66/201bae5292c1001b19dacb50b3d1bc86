@@ -1,0 +1,23 @@
+package iot.unipi.it;
+
+import java.sql.*;
+
+public class DBControl {
+	Connection c = null;
+	PreparedStatement pStmt = null;
+	ResultSet rs = null;
+	
+	String tableBook;
+	String tableAuthor;
+	String tablePublisher;
+	String tableBookAuthor;
+	String tableBookPublisher;
+	
+	String tableBookAttributes[];
+	String tableAuthorAttributes[];
+	String tablePublisherAttributes[];
+	String tableBookAuthorAttributes[];
+	String tableBookPublisherAttributes[];
+	
+
+}

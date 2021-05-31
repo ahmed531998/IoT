@@ -1,0 +1,91 @@
+package iot.unipi.it;
+
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP.Code;
+import org.eclipse.californium.core.coap.Request;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+
+public class CoapObserverClient{
+	private Thermometer t;
+	private CoapClient client;
+	
+	CoapObserveRelation coapObserveRelation;
+
+	public CoapObserverClient(Thermometer t) {
+	    this.client = new CoapClient(t.getResourceURI());
+		this.t = t;
+	}
+
+	public void startObserving() {
+		coapObserveRelation = this.client.observe(new CoapHandler() {
+			
+			public void onLoad(CoapResponse response) {
+				try {
+					String value;
+					JSONObject jo = (JSONObject) JSONValue.parseWithException(response.getResponseText());
+					if (jo.containsKey("temperature") && MainApp.ready) {
+						value = jo.get("temperature").toString();
+						int timestamp = Integer.parseInt(jo.get("timestamp").toString());
+						Integer numericValue = Integer.parseInt(value.trim());
+						int lower = 36;
+						int upper = 39;
+						System.out.println("At " + timestamp + ", i got " + numericValue + " celsius from " + t.getResourceURI());
+						int index = MainApp.thermometers.indexOf(t);
+                        Alarm a = MainApp.alarms.get(index);
+						if (numericValue < lower || numericValue > upper) {
+                            if (!a.getState()) {
+                        		a.setState(true);
+                        		CoapClient alarmTrigger = new CoapClient(a.getResourceURI());
+                        		System.out.println("Dangerours");
+                        		Request req= new Request(Code.POST);
+                        		alarmTrigger.advanced(req);
+                            	MainApp.triggerAlarm("ON", a);
+                            }
+                            else {
+                            	System.out.println("Still dangerous");
+                            }
+						}
+						else {
+							if (a.getState()) {
+								a.setState(false);
+                        		CoapClient alarmTrigger = new CoapClient(a.getResourceURI());
+								Request req= new Request(Code.POST);
+                        		alarmTrigger.advanced(req);
+								System.out.println("Safe");
+								MainApp.triggerAlarm("OFF", a);
+							}
+							else {
+								System.out.println("Still safe");
+							}
+						}
+						ArrayList<Integer> resourceValues = t.getTemperatureValues();
+	                    resourceValues.add(numericValue);
+	                    MainApp.thermometers.get(MainApp.thermometers.indexOf(t))
+	                                    .setTemperatureValues(resourceValues);
+					} else {
+						System.out.println("Temperature value not found.");
+						return;
+					}
+	
+					
+                    //MainApp.showResourcesInformation();
+	
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+
+			public void onError() {
+				System.out.println("Error in observing.");	
+			}
+			
+		});
+	}
+}

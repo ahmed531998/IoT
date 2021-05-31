@@ -1,0 +1,30 @@
+package iot.unipi.it;
+
+import java.util.ArrayList;
+
+public class Thermometer extends Resource {
+	private ArrayList<String> temperatures = new ArrayList<String>();
+
+	public Thermometer(String address, String path) {
+		super(address, path);
+	}
+
+	public ArrayList<String> getTemperatureValues() {
+		return this.temperatures;
+	}
+
+	public void setTemperatureValues(ArrayList<String> list) {
+		this.temperatures = list;
+	}
+	public String getLastTemperatureValue() {
+        if (!temperatures.isEmpty())
+                return this.temperatures.get(temperatures.size()-1);
+        return "NA";
+	}
+	public String getTemperatureValue(int i) {
+		if (i < temperatures.size())
+			return temperatures.get(i);
+		return "NA";
+	}
+
+}

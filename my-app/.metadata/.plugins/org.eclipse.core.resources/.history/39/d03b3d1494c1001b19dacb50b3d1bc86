@@ -1,0 +1,26 @@
+package iot.unipi.it;
+
+import java.sql.*;
+
+public class DBControl {
+	private Connection c = null;
+	private PreparedStatement pStmt = null;
+	private ResultSet rs = null;
+	
+	private String myTable;
+	
+	private String myTableAttributes[];
+	
+	public DBControl(String DB_URL, String myTable, String myTableAttributes[]) throws SQLException{
+		try {
+			this.myTable = myTable;
+			this.myTableAttributes = myTableAttributes;
+			this.c = DriverManager.getConnection(DB_URL);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+}

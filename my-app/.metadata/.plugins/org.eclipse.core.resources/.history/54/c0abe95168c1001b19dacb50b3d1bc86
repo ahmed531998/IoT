@@ -1,0 +1,167 @@
+package iot.unipi.it;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
+
+public class MainApp {
+
+	public static ArrayList<CoapObserverClient> coapObserverClients = new ArrayList<CoapObserverClient>();
+	public static ArrayList<Thermometer> thermometers = new ArrayList<Thermometer>();
+	public static ArrayList<Alarm> alarms = new ArrayList<Alarm>();
+
+	public static void main(String[] args) throws IOException, InterruptedException {
+		runServer();
+		showOperations();
+		while(true) {
+		try {
+			for (index = 0; index < thermometers.size(); index++) {
+					int temp0 = Integer.parseInt(thermometers.get(index).getLastTemperatureValue());
+					int temp1 = Integer.parseInt(thermometers.get(index).getTemperatureValue(thermometers.size()-2));
+					
+					//dangerous now and safe before
+					if ((temp0 > 39 || temp0 < 36) && (temp1 <= 39 && temp1 >= 36)) {
+						triggerAlarm("ON",alarms.get(index));
+						System.out.println(temp0 + " " + temp1 + " is dangerous");
+						System.out.println("alarm is " + alarms.get(index).getState());
+					}
+					//dangerous now and dangerous before
+					if ((temp0 > 39 || temp0 < 36) && (temp1 > 39 || temp1 < 36)) {
+						System.out.println(temp0 + " " + temp1 + " is dangerous");
+						System.out.println("alarm is " + alarms.get(index).getState());
+					}
+					//safe now and dangerous before
+					if ((temp0 <= 39 && temp0 >= 36) && (temp1 > 39 || temp1 < 36)) {
+						triggerAlarm("OFF",alarms.get(index));
+						System.out.println(temp0 + " " + temp1 + " is safe");
+						System.out.println("alarm is " + alarms.get(index).getState());
+					}
+					//safe now and safe before
+					if ((temp0 <= 39 && temp0 >= 36) && (temp1 <= 39 && temp1 >= 36)) {
+						System.out.println(temp0 + " " + temp1 + " is safe");
+						System.out.println("alarm is " + alarms.get(index).getState());
+					}
+			}
+			
+		} catch (Exception e) {
+			System.out.println("Invalid input, here are the available commands\n");
+			e.printStackTrace();
+		}
+		}
+	}
+	public static Integer insertInputLine() {
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+		try {
+			String line = bufferedReader.readLine();
+			Integer value = -1;
+			if (isNumeric(line))
+				value = Integer.parseInt(line);
+			return value;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	public static boolean isNumeric(String numToString) {
+		if (numToString == null)
+			return false;
+		try {
+			@SuppressWarnings("unused")
+			Integer number = Integer.parseInt(numToString);
+		} catch (NumberFormatException e) {
+			System.out.println("Attention! This is not a number");
+			return false;
+		}
+		return true;
+	}
+	public static void showOperations() {
+		System.out.println("Available options:");
+		System.out.println("0-> show resources");
+		System.out.println("1-> start cooling system");
+		System.out.println("2-> stop cooling system");
+		System.out.println("3-> nodes status");
+		System.out.println("4-> show last registered temperature");
+		System.out.println("5-> show  the gap");
+		System.out.println("6-> exit");
+	}
+
+	public static void runServer() {
+		new Thread() {
+			public void run() {
+				Server server = new Server();
+				server.startServer();
+			}
+		}.start();
+	}
+	public static Integer getNodeFromId() {
+		if(thermometers.size()== 0)
+			System.out.println("No nodes registered yet! ");
+		else {
+			System.out.print("Insert the node id: ");
+			Integer index = insertInputLine();
+			System.out.println();
+			if (index == -1)
+				return null;
+			if (index < thermometers.size()){
+				return index;
+			}
+				
+			System.out.println("The selected node does not exists.");
+		} 
+		return null;
+		}
+
+	public static void showResources() {
+		if(thermometers.isEmpty())
+			System.out.println("No resources registered yet.");
+		else{
+			System.out.println("List of the Resources in the system:");
+			for (int i = 0; i < thermometers.size(); i++) {
+				Thermometer t = thermometers.get(i);
+				Alarm a = alarms.get(i);
+				System.out.println(
+						+i + "\tThermometer: " + t.getNodeAddress() + " " + t.getResourcePath() +"  " + t.getResourceURI());
+				System.out.println(+i + "\tAlarm: " + a.getNodeAddress() + " "
+						+ a.getResourcePath() + "  " + a.getResourceURI() + "\n");
+			}
+		} 
+			
+	}
+	public static void showResourcesInformation() {
+		System.out.println("Information about the resources: \n");
+		for (int i = 0; i < thermometers.size(); ++i) {
+			showSingleResourceInformation(i);
+			System.out.println("\n -------------------------------------------- \n");
+		}
+	}
+
+	public static void triggerAlarm(String state, Alarm a) {
+		CoapClient client = new CoapClient(a.getResourceURI());
+		CoapResponse response = client.post("", MediaTypeRegistry.TEXT_PLAIN);
+		String code = response.getCode().toString();
+		if (!code.startsWith("2")) {
+			System.out.println("Error: " + code);
+			return;
+		}
+		System.out.println("Alarm is: " + state);
+	}
+
+	public static void showSingleResourceInformation(Integer index) {
+		Alarm a = alarms.get(index);
+		String stateValue = a.getState() ? "ON" : "OFF";
+		System.out.println(index + "\t" + a.getNodeAddress() + " " + a.getResourcePath()
+				+ "\n\t\tState: " + stateValue + "\n");
+
+		Thermometer t = thermometers.get(index);
+		System.out.println(index + "\t" + t.getNodeAddress() + " " + t.getResourcePath());
+		ArrayList<String> list = t.getTemperatureValues();
+		for (int j = 0; j < list.size(); ++j)
+			System.out.println("\t\tId: " + j + "\tValue: " + list.get(j));
+	}
+
+}

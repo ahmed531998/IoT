@@ -1,0 +1,57 @@
+package iot.unipi.it;
+
+import java.sql.*;
+
+public class DBControl {
+	private Connection c = null;
+	private PreparedStatement pStmt = null;
+	private ResultSet rs = null;
+	
+	private String myTable;
+	
+	private String myTableAttributes[];
+	
+	public DBControl(String DB_URL, String myTable, String myTableAttributes[]) throws SQLException{
+		try {
+			this.myTable = myTable;
+			this.myTableAttributes = myTableAttributes;
+			this.c = DriverManager.getConnection(DB_URL);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public boolean addReading(String URI, Integer timestamp, Integer reading, boolean state)
+			throws SQLException{
+		try {
+			String query = "insert into " + myTable + 
+					       " (" + myTableAttributes[1] + ", " +
+					       		  myTableAttributes[2] + ", " +
+					       		  myTableAttributes[3] + ", " +
+					       		  myTableAttributes[4] + ")  VALUES (?, ?, ?, ?)";
+			
+			pStmt = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+			
+			pStmt.setString (1, URI);
+			pStmt.setInt (2, timestamp);
+			pStmt.setInt (3, reading);
+			pStmt.setBoolean(4, state);
+			
+			pStmt.execute();
+			
+			
+			pStmt = null;
+			rs = null;
+			
+			return true;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean deleteReading(String URI) {
+		
+	}
+}
