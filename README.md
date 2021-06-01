@@ -4,7 +4,7 @@ An IoT-based system that is intended to keep track of patients temperatures at t
 # Instructions Manual
 1) In terminal, type sudo vi /etc/mosquitto/mosquitto.conf
 2) Add the following lines: 
-	allow_anonymous true
+ 	allow_anonymous true
 	listener 1883 fd00::1
 	listener 1883 localhost
 3) Save the modifications.
