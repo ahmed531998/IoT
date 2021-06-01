@@ -1,0 +1,113 @@
+package iot.unipi.it;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP.Code;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.core.coap.Request;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+
+public class CoapObserverClient{
+	private CoapClient client;
+
+	private Thermometer t;
+	
+	public CoapObserverClient(Thermometer t) {
+	    this.client = new CoapClient(t.getResourceURI());
+		this.t = t;
+	}
+
+	public void startObserving() {
+		CoapObserveRelation coapObserveRelation = this.client.observe(new CoapHandler() {		
+			public void onLoad(CoapResponse response) {
+				try {
+					JSONObject sensorMessage = (JSONObject) JSONValue.parseWithException(response.getResponseText());
+					if (sensorMessage.containsKey("temperature")) {
+						int timestamp = Integer.parseInt(sensorMessage.get("timestamp").toString());
+						Integer numericValue = Integer.parseInt(sensorMessage.get("temperature").toString());
+						int lower = 36;
+						int upper = 39;
+						int index = MainApp.thermometers.indexOf(t);
+                        Alarm a = MainApp.alarms.get(index);
+						if (numericValue < lower || numericValue > upper) {
+                            if (!a.getState()) {
+                        		a.setState(true);
+                        		System.out.println("Dangerous");
+                        		System.out.println(a.getResourceURI()+"?color=r");
+                        		String payload = "mode=on";
+                        		Request req = new Request(Code.POST);
+                        		req.setConfirmable(true);
+                        		req.setPayload(payload);
+                        		req.setURI(a.getResourceURI()+"?color=r");
+                        		System.out.println(req);
+                        		req.send();
+                            }
+                            else {
+                            	System.out.println("Still dangerous");
+                            }
+						}
+						else {
+							if (a.getState()) {
+								a.setState(false);
+                        		//CoapClient alarmTrigger = new CoapClient(a.getResourceURI()+"?color=r");
+                        		String payload = "mode=off";
+                        		//CoapResponse resp = alarmTrigger.put(payload, MediaTypeRegistry.TEXT_PLAIN);
+                        		Request req = new Request(Code.POST);
+                        		req.setConfirmable(false);
+                        		req.setPayload(payload);
+                        		req.setURI(a.getResourceURI()+"?color=r");
+                        		System.out.println(req);
+                        		req.send();
+								//Request req= new Request(Code.POST);
+                        		//alarmTrigger.advanced(req);
+								System.out.println("Safe");
+								//MainApp.triggerAlarm("OFF", a);
+							}
+							else {
+								System.out.println("Still safe");
+							}
+						}
+						System.out.println("Writing to DB: " + ("Node: "+t.getResourceURI()+
+								"\ttime: "+timestamp+
+								"\tvalue: "+numericValue+
+								" celsius\talarm on? "+a.getState()));
+						
+						try {
+							MainApp.db.addReading(t.getResourceURI(), timestamp, numericValue, a.getState());
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						
+						ArrayList<Integer> resourceValues = t.getTemperatureValues();
+	                    resourceValues.add(numericValue);
+	                    MainApp.thermometers.get(MainApp.thermometers.indexOf(t))
+	                                    .setTemperatureValues(resourceValues);
+					} else {
+						System.out.println("Temperature value not found.");
+						return;
+					}
+	
+					
+                    //MainApp.showResourcesInformation();
+	
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+
+			public void onError() {
+				System.out.println("Error in observing.");	
+			}
+			
+		});
+	}
+}

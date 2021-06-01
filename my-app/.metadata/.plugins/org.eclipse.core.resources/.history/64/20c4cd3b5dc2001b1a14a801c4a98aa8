@@ -1,0 +1,110 @@
+package iot.unipi.it;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP.Code;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.coap.Response;
+
+public class MainApp {
+	
+	//DB CONFIG
+	private static String DB_URL = "jdbc:mysql://localhost/ahmed?serverTimezone=UTC";
+	private static String table = "patients";
+	private static String tableAttributes[] = {"id", "URI", "timestamp", "value", "state"};
+	
+	//RESOURCE STORAGE
+	protected static ArrayList<Thermometer> thermometers = new ArrayList<Thermometer>();
+	protected static ArrayList<Alarm> alarms = new ArrayList<Alarm>();
+	
+	//DB CONTROLLER
+	protected static DBControl db; 
+	
+	public static void main(String[] args) throws SQLException{
+		db = new DBControl(DB_URL, "root", "root", table, tableAttributes);
+		
+		try {
+			MyClient mc = new MyClient();
+			Thread.sleep(10000);
+			mc.publish("on");
+			
+		}catch(MqttException me){
+			me.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		runServer();
+
+		while(true) {
+		
+		}
+	}
+	
+	
+
+	public static void runServer() {
+		new Thread() {
+			public void run() {
+				Server server = new Server();
+				server.startServer();
+			}
+		}.start();
+	}
+	
+
+	public static void showResources() {
+		if(thermometers.isEmpty())
+			System.out.println("No resources registered yet.");
+		else{
+			System.out.println("List of the Resources in the system:");
+			for (int i = 0; i < thermometers.size(); i++) {
+				Thermometer t = thermometers.get(i);
+				Alarm a = alarms.get(i);
+				System.out.println(
+						+i + "\tThermometer: " + t.getNodeAddress() + " " + t.getResourcePath() +"  " + t.getResourceURI());
+				System.out.println(+i + "\tAlarm: " + a.getNodeAddress() + " "
+						+ a.getResourcePath() + "  " + a.getResourceURI() + "\n");
+			}
+		} 
+			
+	}
+	public static void showResourcesInformation() {
+		System.out.println("Information about the resources: \n");
+		for (int i = 0; i < thermometers.size(); ++i) {
+			showSingleResourceInformation(i);
+			System.out.println("\n -------------------------------------------- \n");
+		}
+	}
+
+	public static void triggerAlarm(String state, Alarm a) {
+		System.out.println("I am sending to "+ a.getResourceURI());
+		CoapClient client = new CoapClient(a.getResourceURI());
+		//Request req= new Request(Code.POST);
+		byte[] payload = null;
+		CoapResponse resp = client.post(payload, MediaTypeRegistry.UNDEFINED);
+		//CoapResponse resp = client.advanced(req);
+		System.out.println("Alarm is: " + state);
+	}
+
+	public static void showSingleResourceInformation(Integer index) {
+		Alarm a = alarms.get(index);
+		String stateValue = a.getState() ? "ON" : "OFF";
+		System.out.println(index + "\t" + a.getNodeAddress() + " " + a.getResourcePath()
+				+ "\n\t\tState: " + stateValue + "\n");
+
+		Thermometer t = thermometers.get(index);
+		System.out.println(index + "\t" + t.getNodeAddress() + " " + t.getResourcePath());
+		ArrayList<Integer> list = t.getTemperatureValues();
+		for (int j = 0; j < list.size(); ++j)
+			System.out.println("\t\tId: " + j + "\tValue: " + list.get(j));
+	}
+
+}

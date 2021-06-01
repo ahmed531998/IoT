@@ -1,0 +1,9 @@
+package iot.unipi.it;
+
+import java.util.ArrayList;
+
+public class Thermometer extends Resource {
+	public Thermometer(String address, String path) {
+		super(address, path);
+	}
+}

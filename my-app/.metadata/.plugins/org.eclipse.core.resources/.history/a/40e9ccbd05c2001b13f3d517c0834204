@@ -1,0 +1,52 @@
+package iot.unipi.it;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+
+public class MyClient implements MqttCallback{
+	
+	private String broker = "tcp://127.0.0.1:1883";
+	private String clientId = "JavaApp";
+	private String subTopic = "status";
+	private String pubTopic = "actuator";
+	private MqttClient mqttClient = null;
+	
+	public MyClient() throws MqttException {
+		this.mqttClient = new MqttClient(this.broker,this.clientId);
+		mqttClient.setCallback( this );
+		mqttClient.connect();
+		mqttClient.subscribe(this.subTopic);
+	}
+	
+	
+	public void publish(String content) throws MqttException{
+		try {
+			//mqttClient.connect();
+			MqttMessage message = new MqttMessage(content.getBytes());
+			mqttClient.publish(this.pubTopic, message);
+			//mqttClient.disconnect();
+		} catch(MqttException me) {
+			me.printStackTrace();
+		}
+	}
+	
+	public void connectionLost(Throwable cause) {
+		// TODO Auto-generated method stub
+		System.out.println("Connection is broken");
+		
+	}
+
+	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		System.out.println(String.format("[%s] %s", topic, new String(message.getPayload())));
+	}
+
+	public void deliveryComplete(IMqttDeliveryToken token) {
+		// TODO Auto-generated method stub
+		System.out.println("Delievery Complete");
+		
+	}
+
+}
