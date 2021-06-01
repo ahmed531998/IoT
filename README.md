@@ -1,7 +1,7 @@
 # IoT Project 2021 - AIDE - UNIPI
 An IoT-based system that is intended to keep track of patients temperatures at the hospital and take action accordingly by triggering an alarm (simulated by a led) if necessary. 
 
-#Instructions Manual
+# Instructions Manual
 1) In terminal, type sudo vi /etc/mosquitto/mosquitto.conf
 2) Add the following lines: 
 	allow_anonymous true
