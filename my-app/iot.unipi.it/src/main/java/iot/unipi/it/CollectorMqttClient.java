@@ -53,6 +53,7 @@ public class CollectorMqttClient implements MqttCallback{
 			if (sensorMessage.containsKey("temperature")) {
 				int timestamp = Integer.parseInt(sensorMessage.get("timestamp").toString());
 				Integer numericValue = Integer.parseInt(sensorMessage.get("temperature").toString());
+				String nodeId = sensorMessage.get("node").toString();
 				int lower = 36;
 				int upper = 39;
 				boolean on = false;
@@ -68,13 +69,14 @@ public class CollectorMqttClient implements MqttCallback{
 					on = false;
 				}
 				publish(reply);
-				System.out.println("Writing to DB: " + ("Node: "+" mqtt1"+
-						"\ttime: "+timestamp+
-						"\tvalue: "+numericValue+
-						" celsius\talarm on? "+on));
-				
-				try {
-					Collector.db.addReading("mqtt1", timestamp, numericValue, on);
+				System.out.println("Writing to DB: " + ("Node: "+ "mqtt://"+nodeId+
+                                                "\ttime: "+timestamp+
+                                                "\tvalue: "+numericValue+
+                                                " celsius\talarm on? "+on));
+
+                                try {
+                                        Collector.db.addReading("mqtt1://"+nodeId, timestamp, numericValue, on);
+
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
