@@ -20,8 +20,8 @@ Please follow these steps in order
 	3- listener 1883 localhost
 4) Save the modifications.
 5) Under the Mqtt Network directory, modify the PANID in the project-conf.h of the border router to your PANID (If it is to be executed on the remote testbed)
-6) Start mosquitto  ==> sudo mosquitto -c /etc/mosquitto/mosquitto.conf
-7) Deploy the code under the Mqtt Network directory on the remote sensors (one for the border router and another for the sensor)
+6) Start mosquitto  (see instructions.txt)
+7) Deploy the code under the Mqtt Network directory on the remote sensors (one for the border router and another for the sensor) (see instructions.txt)
 
 # Locally, on the virtual machine,
 1) modify the database configuration in the Collector.java file under the my-app java folder inside the iot.unipi.it package
