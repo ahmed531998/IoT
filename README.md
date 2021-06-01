@@ -23,7 +23,7 @@ Please follow these steps in order
 6) Start mosquitto  ==> sudo mosquitto -c /etc/mosquitto/mosquitto.conf
 7) Deploy the code under the Mqtt Network directory on the remote sensors (one for the border router and another for the sensor)
 
-# Locally, on the virtual machine
+# Locally, on the virtual machine,
 1) modify the database configuration in the Collector.java file under the my-app java folder inside the iot.unipi.it package
 2) run "mvn clean install" in terminal
 3) run the code
