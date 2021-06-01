@@ -1,0 +1,18 @@
+BORDER ROUTER (replace any 39 with your assigned port)
+sudo ssh -i ./key -p 2039 user@iot.dii.unipi.it
+cd contiki-ng/examples/rpl-border-router/
+make clean
+make TARGET=nrf52840 BOARD=dongle border-router.dfu-upload PORT=/dev/ttyACM90
+make TARGET=nrf52840 BOARD=dongle connect-router PORT=/dev/ttyACM90
+_______________________________________________________________________________
+MOSQUITTO (replace any 39 with your assigned port)
+sudo ssh -L 1883:127.0.0.1:1883 -p 2039 -i key user@iot.dii.unipi.it
+sudo mosquitto -c /etc/mosquitto/mosquitto.conf
+_______________________________________________________________________________
+Sensor (replace any 39 with your assigned port)
+sudo ssh -i ./key -p 2039 user@iot.dii.unipi.it
+cd contiki-ng/examples/mqtt-lab/
+make clean
+make TARGET=nrf52840 BOARD=dongle mqtt-client.dfu-upload PORT=/dev/ttyACM39
+make TARGET=nrf52840 BOARD=dongle login PORT=/dev/ttyACM39
+_______________________________________________________________________________
