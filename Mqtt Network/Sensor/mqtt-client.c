@@ -278,7 +278,7 @@ PROCESS_EXIT();
                 record_measure();
                 // Publish something
                 sprintf(pub_topic, "%s", "temperature");
-                sprintf(app_buffer, "{\"temperature\": %d, \"timestamp\": %lu, \"unit\": \"celsius\"}", value, clock_seconds());
+                sprintf(app_buffer, "{\"node\": %d, \"temperature\": %d, \"timestamp\": %lu, \"unit\": \"celsius\"}", node_id, value, clock_seconds());
                 mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
                         strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
         }
