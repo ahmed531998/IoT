@@ -5,7 +5,7 @@
 /* Enable TCP */
 #define UIP_CONF_TCP 1
 
-/*#define IEEE802154_CONF_PANID 0x0027*/
+#define IEEE802154_CONF_PANID 0x0027
 
 //#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_DBG
 //#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_DBG
