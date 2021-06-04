@@ -17,6 +17,8 @@ public class CollectorCoapClient{
 
 	private Thermometer t;
 	private Alarm a;
+ 
+	private boolean toCancel = false;
 	
 	public CollectorCoapClient(Thermometer t) {
 	    this.client = new CoapClient(t.getResourceURI());
@@ -26,7 +28,6 @@ public class CollectorCoapClient{
 
 	public void startObserving() {
 		CoapObserveRelation coapObserveRelation = this.client.observe(new CoapHandler() {		
-
 			public void onLoad(CoapResponse response) {
 				try {
 					JSONObject sensorMessage = (JSONObject) JSONValue.parseWithException(response.getResponseText());
@@ -38,40 +39,28 @@ public class CollectorCoapClient{
 						int index = Collector.thermometers.indexOf(t);
                         a = Collector.alarms.get(index);
 						if (numericValue < lower || numericValue > upper) {
-                            if (!a.getState()) {
-                        		a.setState(true);
-                        		System.out.println("Dangerous");
-                        		String payload = "mode=on";
-                        		Request req = new Request(Code.POST);
-                        		req.setConfirmable(true);
-                        		req.setPayload(payload);
-                        		req.setURI(a.getResourceURI()+"?color=r");
-                        		req.send();
-                            }
-                            else {
-                            	System.out.println("Still dangerous");
-                            }
-						}
-						else {
-							if (a.getState()) {
-								a.setState(false);
-                        		String payload = "mode=off";
-                        		Request req = new Request(Code.POST);
-                        		req.setConfirmable(true);
-                        		req.setPayload(payload);
-                        		req.setURI(a.getResourceURI()+"?color=r");
-                        		req.send();
-								System.out.println("Safe");
-							}
-							else {
-								System.out.println("Still safe");
-							}
+                        	a.setState(true);
+                        	System.out.println("Dangerous");
+                        	String payload = "mode=on";
+                        	Request req = new Request(Code.POST);
+                        	req.setConfirmable(true);
+                        	req.setPayload(payload);
+                        	req.setURI(a.getResourceURI()+"?color=r");
+                        	req.send();
+						} else {
+							a.setState(false);
+                        	String payload = "mode=off";
+                        	Request req = new Request(Code.POST);
+                        	req.setConfirmable(true);
+                        	req.setPayload(payload);
+                        	req.setURI(a.getResourceURI()+"?color=r");
+                        	req.send();
+							System.out.println("Safe");
 						}
 						System.out.println("Writing to DB: " + ("Node: "+t.getResourceURI()+
 								"\ttime: "+timestamp+
 								"\tvalue: "+numericValue+
 								" celsius\talarm on? "+a.getState()));
-						
 						try {
 							Collector.db.addReading(t.getResourceURI(), timestamp, numericValue, a.getState());
 						} catch (SQLException e) {
@@ -88,12 +77,30 @@ public class CollectorCoapClient{
 			}
 
 			public void onError() {
-				System.out.println("I cannot observe anything");	
+				toCancel = true;
+				System.out.println("I cannot observe anything from " + t.getResourceURI());
+				for (int i = 0; i < Collector.thermometers.size(); i++) {
+					if(Collector.thermometers.get(i).getResourceURI().equals(t.getResourceURI())){
+						Collector.thermometers.remove(i);
+						Collector.alarms.remove(i);
+						break;
+					}
+				}
+				return;
 			}
 		});
+		if (toCancel) {
+			coapObserveRelation.proactiveCancel();
+		}
 		if(coapObserveRelation.isCanceled()) {
-			Collector.thermometers.remove(t);
-			Collector.alarms.remove(a);
+			System.out.println("Observation is cancelled for " + t.getResourceURI());
+			for (int i = 0; i < Collector.thermometers.size(); i++) {
+				if(Collector.thermometers.get(i).getResourceURI().equals(t.getResourceURI())){
+					Collector.thermometers.remove(i);
+					Collector.alarms.remove(i);
+					break;
+				}
+			}
 		}
 	}
 }

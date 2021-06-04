@@ -287,6 +287,7 @@ PROCESS_EXIT();
         }
  else if ( state == STATE_DISCONNECTED ){
   LOG_ERR("Disconnected form MQTT broker\n");
+  state = STATE_INIT;
   // Recover from error
 }
 

@@ -37,17 +37,38 @@ public class Registry extends CoapResource {
 			endIndex = responseText.indexOf(">");
 			String path = responseText.substring(startIndex + 2, endIndex);
 			responseText = responseText.substring(endIndex + 1);
-
+			boolean toAdd = true;
 			if (path.contains("temperature")) {
 				Thermometer t = new Thermometer(sensorAddress.getHostAddress(), path);
-				if (!Collector.thermometers.contains(t)) {
+				for(int i = 0; i < Collector.thermometers.size(); i++) {
+					if (Collector.thermometers.get(i).getResourceURI().equals(t.getResourceURI())) {
+						toAdd = false;
+						break;
+					}
+				}
+				if (toAdd) {
+					System.out.println("Adding " + t.getResourceURI());
 					Collector.thermometers.add(t);
 					observe(t);
 				}
+				else {
+					System.out.println("Already added " + t.getResourceURI());
+				}
 			} else if (path.contains("alarm")) {
 				Alarm a = new Alarm(sensorAddress.getHostAddress(), path);
-				if (!Collector.alarms.contains(a))
+				for(int i = 0; i < Collector.alarms.size(); i++) {
+					if (Collector.alarms.get(i).getResourceURI().equals(a.getResourceURI())) {
+						toAdd = false;
+						break;
+					}
+				}
+				if (toAdd) {
+					System.out.println("Adding " + a.getResourceURI());
 					Collector.alarms.add(a);
+				}
+				else {
+					System.out.println("Already added " + a.getResourceURI());
+				}
 			}
 		}
 	}

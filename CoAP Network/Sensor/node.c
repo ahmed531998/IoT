@@ -29,13 +29,10 @@ void client_chunk_handler(coap_message_t *response)
 
 	if(response == NULL) {
 		LOG_INFO("Request timed out");
-		registered = false;
 		return;
 	}
-	
+	registered = true;
 	int len = coap_get_payload(response, &chunk);
-	registered = true;	
-
 	LOG_INFO("|%.*s \n", len, (char *)chunk);
 }
 
@@ -80,11 +77,12 @@ PROCESS_THREAD(node, ev, data)
   LOG_DBG("Registering with server\n");
   COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
 
- while(!registered){
-	LOG_DBG("Retry registeration \n");
-	COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
- }
+  while(!registered){
 
+    LOG_DBG("Retrying with server\n");
+    COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
+
+  }
 
   etimer_set(&myPeriodicTimer, 30*CLOCK_SECOND);
   
@@ -94,17 +92,12 @@ PROCESS_THREAD(node, ev, data)
       if (ev == PROCESS_EVENT_TIMER && data == &myPeriodicTimer){
 	  temperatureValue = measure_temperature();
 	  temperature.trigger();
+	  if(period%5==0) {
+		    LOG_DBG("Retrying/Pinging the server\n");
+	  	    COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
+	  }
 	  period++;
 	  etimer_reset(&myPeriodicTimer);
-      }
-      if (period%5 == 0){
-	  LOG_DBG("Pinging the server\n");
-          COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
-
-         while(!registered){
-	     LOG_DBG("Retry registeration \n");
-	     COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
- 	}    
       }
     }
 
