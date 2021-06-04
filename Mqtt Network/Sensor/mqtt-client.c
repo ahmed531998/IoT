@@ -128,11 +128,9 @@ pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
 {
   printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,
           topic_len, chunk_len);
-  char* buffer;
-  char* b = "alarm";
-  sprintf(buffer, "%d", node_id); 
-  strcat(b,buffer);
-  if(strcmp(topic, b) == 0) {
+   char t[11];
+   sprintf(t, "alarm%d", node_id);
+  if(strcmp(topic, t) == 0) {
     printf("Received Actuator command\n");
 printf("%s\n", chunk);
     if(strcmp((const char *)chunk, "on")==0){
@@ -266,11 +264,9 @@ state = STATE_NET_OK;
  if(state==STATE_CONNECTED){
 
  // Subscribe to a topic 
-   char* buffer;
-  char* b = "alarm";
-  sprintf(buffer, "%d", node_id); 
-  strcat(b,buffer);
- strcpy(sub_topic,b);
+  char t[11];
+   sprintf(t, "alarm%d", node_id);
+ strcpy(sub_topic,t);
 
  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
