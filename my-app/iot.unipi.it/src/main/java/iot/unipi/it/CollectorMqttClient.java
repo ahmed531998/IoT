@@ -2,8 +2,6 @@ package iot.unipi.it;
 
 import java.sql.SQLException;
 
-import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.CoAP.Code;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -21,32 +19,54 @@ public class CollectorMqttClient implements MqttCallback{
 	private String pubTopic = "alarm";
 	private MqttClient mqttClient = null;
 	
-	public CollectorMqttClient() throws MqttException {
-		this.mqttClient = new MqttClient(this.broker,this.clientId);
-		mqttClient.setCallback( this );
-		mqttClient.connect();
-		mqttClient.subscribe(this.subTopic);
+	public CollectorMqttClient() throws InterruptedException {
+		do {
+			int timeWindow = 50000;
+			Thread.sleep(timeWindow);
+			try {
+				this.mqttClient = new MqttClient(this.broker,this.clientId);
+				this.mqttClient.setCallback( this );
+				this.mqttClient.connect();
+				this.mqttClient.subscribe(this.subTopic);
+			}catch(MqttException me) {
+				System.out.println("I could not connect, Retrying ...");
+			}
+		}while(!this.mqttClient.isConnected());
 	}
 	
-	public void publish(String content) throws MqttException{
+	public void publish(String content, String node) throws MqttException{
 		try {
 			MqttMessage message = new MqttMessage(content.getBytes());
-			mqttClient.publish(this.pubTopic, message);
+			this.mqttClient.publish(this.pubTopic+node, message);
 		} catch(MqttException me) {
 			me.printStackTrace();
 		}
 	}
 	
 	public void connectionLost(Throwable cause) {
-		cause.printStackTrace();
 		// TODO Auto-generated method stub
 		System.out.println("Connection is broken");
+		int timeWindow = 3000;
+		while (!this.mqttClient.isConnected()) {
+			try {
+				System.out.println("Trying to reconnect in " + timeWindow/1000 + " seconds.");
+				Thread.sleep(timeWindow);
+				System.out.println("Reconnecting ...");
+				timeWindow *= 2;
+				this.mqttClient.connect();
+				this.mqttClient.subscribe(this.subTopic);
+				System.out.println("Connection is restored");
+			}catch(MqttException me) {
+				System.out.println("I could not connect");
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+			}
+		}
 		
 	}
 
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		byte[] payload = message.getPayload();
-		System.out.println(String.format("[%s] %s", topic, new String(payload)));
 		
 		try {
 			JSONObject sensorMessage = (JSONObject) JSONValue.parseWithException(new String(payload));
@@ -68,7 +88,7 @@ public class CollectorMqttClient implements MqttCallback{
 					reply = "off";
 					on = false;
 				}
-				publish(reply);
+				publish(reply, nodeId);
 				System.out.println("Writing to DB: " + ("Node: "+ "mqtt://"+nodeId+
                                                 "\ttime: "+timestamp+
                                                 "\tvalue: "+numericValue+

@@ -73,7 +73,7 @@ PROCESS_THREAD(node, ev, data)
   coap_endpoint_parse(SERVER, strlen(SERVER), &myServer);
 
   coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);
-  coap_set_header_uri_path(request, "registration");
+  coap_set_header_uri_path(request, "registry");
 
   LOG_DBG("Registering with server\n");
   COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);

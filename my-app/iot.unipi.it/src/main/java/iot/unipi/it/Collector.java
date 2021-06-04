@@ -3,8 +3,6 @@ package iot.unipi.it;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import org.eclipse.paho.client.mqttv3.MqttException;
-
 public class Collector {
 	
 	//DB CONFIG
@@ -32,19 +30,15 @@ public class Collector {
 		}.start();
 	}
 	
-	public static void createMqttClient(){
-		try {
+	public static void createMqttClient() throws InterruptedException{
 			mc = new CollectorMqttClient();
-		}catch(MqttException me){
-			me.printStackTrace();
-		} 
 	}
 	
 	
-	public static void main(String[] args) throws SQLException{
+	public static void main(String[] args) throws SQLException, InterruptedException{
 		db = new DBControl(DB_URL, "root", "root", table, tableAttributes);
-		createMqttClient();
 		runServer();
+		createMqttClient();
 	}
 		
 }

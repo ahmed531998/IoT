@@ -1,0 +1,30 @@
+package iot.unipi.it;
+
+import java.net.InetAddress;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.server.resources.CoapExchange;
+
+public class Registry extends CoapResource {
+
+	public Registry(String name) {
+		super(name);
+	}
+	
+	public void handlePost(CoapExchange exchange) {
+		exchange.accept();
+		InetAddress clientAddress = exchange.getSourceAddress();
+		Thermometer t = new Thermometer(clientAddress.getHostAddress(), "thermometer");
+		Alarm a = new Alarm(clientAddress.getHostAddress(), "alarm");
+		System.out.println(a.getResourceURI() + " and " + t.getResourceURI() + " have registered with me");
+		
+		observe(t, a);
+	}
+
+	private static void observe(Thermometer t, Alarm a) {
+		CollectorCoapClient observer = new CollectorCoapClient(t, a);
+		observer.startObserving();
+	}
+}

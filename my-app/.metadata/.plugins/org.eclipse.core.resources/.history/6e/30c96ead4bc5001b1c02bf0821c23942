@@ -1,0 +1,42 @@
+package iot.unipi.it;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.eclipse.paho.client.mqttv3.MqttException;
+
+public class Collector {
+	
+	//DB CONFIG
+	private static String DB_URL = "jdbc:mysql://localhost/ahmed?serverTimezone=UTC";
+	private static String table = "patients";
+	private static String tableAttributes[] = {"id", "URI", "timestamp", "value", "state"};
+		
+	//DB CONTROLLER
+	protected static DBControl db; 
+	
+	//MQTT CLIENT
+	private static CollectorMqttClient mc = null;
+	
+	//START THREAD FOR THE SERVER THAT CREATES THE CoAP OBSERVER CLIENTS
+	public static void runServer() {
+		new Thread() {
+			public void run() {
+				CollectorServer server = new CollectorServer();
+				server.startServer();
+			}
+		}.start();
+	}
+	
+	public static void createMqttClient(){
+		mc = new CollectorMqttClient(); 
+	}
+	
+	
+	public static void main(String[] args) throws SQLException{
+		db = new DBControl(DB_URL, "root", "root", table, tableAttributes);
+		runServer();
+		//createMqttClient();
+	}
+		
+}

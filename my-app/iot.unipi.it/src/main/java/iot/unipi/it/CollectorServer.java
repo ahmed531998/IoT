@@ -8,8 +8,8 @@ public class CollectorServer extends CoapServer {
 		CaliforniumLogger.disableLogging();
 	} 
 	public void startServer() {
-		System.out.println("Server is up");
-		this.add(new ResourceRegistrationHandler("registration"));
+		System.out.println("CoAP Server is up");
+		this.add(new Registry("registry"));
 		this.start();
 	}
 }

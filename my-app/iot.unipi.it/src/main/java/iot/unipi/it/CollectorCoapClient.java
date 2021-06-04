@@ -16,14 +16,17 @@ public class CollectorCoapClient{
 	private CoapClient client;
 
 	private Thermometer t;
+	private Alarm a;
 	
 	public CollectorCoapClient(Thermometer t) {
 	    this.client = new CoapClient(t.getResourceURI());
 		this.t = t;
+		this.a = null;
 	}
 
 	public void startObserving() {
 		CoapObserveRelation coapObserveRelation = this.client.observe(new CoapHandler() {		
+
 			public void onLoad(CoapResponse response) {
 				try {
 					JSONObject sensorMessage = (JSONObject) JSONValue.parseWithException(response.getResponseText());
@@ -33,18 +36,16 @@ public class CollectorCoapClient{
 						int lower = 36;
 						int upper = 39;
 						int index = Collector.thermometers.indexOf(t);
-                        Alarm a = Collector.alarms.get(index);
+                        a = Collector.alarms.get(index);
 						if (numericValue < lower || numericValue > upper) {
                             if (!a.getState()) {
                         		a.setState(true);
                         		System.out.println("Dangerous");
-                        		System.out.println(a.getResourceURI()+"?color=r");
                         		String payload = "mode=on";
                         		Request req = new Request(Code.POST);
                         		req.setConfirmable(true);
                         		req.setPayload(payload);
                         		req.setURI(a.getResourceURI()+"?color=r");
-                        		System.out.println(req);
                         		req.send();
                             }
                             else {
@@ -59,7 +60,6 @@ public class CollectorCoapClient{
                         		req.setConfirmable(true);
                         		req.setPayload(payload);
                         		req.setURI(a.getResourceURI()+"?color=r");
-                        		System.out.println(req);
                         		req.send();
 								System.out.println("Safe");
 							}
@@ -91,5 +91,9 @@ public class CollectorCoapClient{
 				System.out.println("I cannot observe anything");	
 			}
 		});
+		if(coapObserveRelation.isCanceled()) {
+			Collector.thermometers.remove(t);
+			Collector.alarms.remove(a);
+		}
 	}
 }

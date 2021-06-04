@@ -1,0 +1,67 @@
+package iot.unipi.it;
+
+import java.net.InetAddress;
+import java.util.ArrayList;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP.ResponseCode;
+import org.eclipse.californium.core.server.resources.CoapExchange;
+
+public class Registry extends CoapResource {
+	private ArrayList<Thermometer> thermometers = new ArrayList<Thermometer>();
+	private ArrayList<Alarm> alarms = new ArrayList<Alarm>();
+	
+	public Registry(String name) {
+		super(name);
+	}
+	
+	public void handlePOST(CoapExchange exchange) {
+		exchange.accept();
+	    exchange.respond(ResponseCode.CREATED);
+		InetAddress sensorAddress = exchange.getSourceAddress();
+		
+		//resource discovery
+		CoapClient client = new CoapClient("coap://[" + sensorAddress.getHostAddress() + "]:5683/.well-known/core");
+		CoapResponse response = client.get();
+		
+		String responseText = response.getResponseText();
+		Integer startIndex = 0, endIndex;
+
+		while (true) {
+			startIndex = responseText.indexOf("</");
+			if (startIndex == -1)
+				break;
+			endIndex = responseText.indexOf(">");
+			String path = responseText.substring(startIndex + 2, endIndex);
+			responseText = responseText.substring(endIndex + 1);
+
+			if (path.contains("thermometer") || path.contains("alarm")) {
+				Thermometer t = new Thermometer(sensorAddress.getHostAddress(), "thermometer");
+				Alarm a = new Alarm(sensorAddress.getHostAddress(), "alarm");
+				boolean added = false;
+				for (int i = 0; i < thermometers.size(); i++) {
+					if(thermometers.get(i).getResourceURI().equals(t.getResourceURI())) {
+						added = true;
+						System.out.println(a.getResourceURI() + " and " + t.getResourceURI() + " are already registered with me");
+						break;
+					}
+				}
+				if (!added) {
+					thermometers.add(t);
+					alarms.add(a);
+					observe(t, a);
+					System.out.println(a.getResourceURI() + " and " + t.getResourceURI() + " have registered with me");
+
+				}
+			}
+		}	
+		
+	}
+
+	private static void observe(Thermometer t, Alarm a) {
+		CollectorCoapClient observer = new CollectorCoapClient(t, a);
+		observer.startObserving();
+	}
+}
