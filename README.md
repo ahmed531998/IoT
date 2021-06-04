@@ -2,7 +2,6 @@
 An IoT-based system that is intended to keep track of patients temperatures at the hospital and take action accordingly by triggering an alarm (simulated by a led) if necessary. 
 
 # Instructions Manual
-Please follow these steps in order
 
 # Locally, on the virtual machine,
 1) Save the repo under contiki-ng/examples directory.
