@@ -21,6 +21,7 @@
 
 static struct etimer myPeriodicTimer;
 bool registered = false;
+static int period = 0;
 
 void client_chunk_handler(coap_message_t *response)
 {
@@ -28,6 +29,7 @@ void client_chunk_handler(coap_message_t *response)
 
 	if(response == NULL) {
 		LOG_INFO("Request timed out");
+		registered = false;
 		return;
 	}
 	
@@ -92,7 +94,17 @@ PROCESS_THREAD(node, ev, data)
       if (ev == PROCESS_EVENT_TIMER && data == &myPeriodicTimer){
 	  temperatureValue = measure_temperature();
 	  temperature.trigger();
+	  period++;
 	  etimer_reset(&myPeriodicTimer);
+      }
+      if (period%5 == 0){
+	  LOG_DBG("Pinging the server\n");
+          COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
+
+         while(!registered){
+	     LOG_DBG("Retry registeration \n");
+	     COAP_BLOCKING_REQUEST(&myServer, request, client_chunk_handler);
+ 	}    
       }
     }
 
